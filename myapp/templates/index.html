@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RentCars: аренда авто напрямую у владельцев</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Unbounded:wght@500;700&display=swap" rel="stylesheet">
+<!-- Podklyuchaem Three.js dlya 3D renderinga -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0}
+:root{--ink:#12141c;--y:#ffd400;--bg:#f3f4f7;--paper:#fff;--line:#dcdfe6;--mu:#667085;--ok:#18956a;--bad:#d9382b;--wait:#b7791f}
+body{font-family:Manrope,system-ui,Segoe UI,sans-serif;background:var(--bg);color:var(--ink);line-height:1.5}
+h1,h2,h3,.logo,.plate,.pl2,.tot b{font-family:Unbounded,Manrope,system-ui,sans-serif}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--y);outline-offset:2px}
+.wrap{max-width:1180px;margin:0 auto;padding:0 22px}
+nav{background:rgba(18,20,28,.92);backdrop-filter:blur(16px);color:#fff;position:sticky;top:0;z-index:30;border-bottom:1px solid #262b38}
+.nv{display:flex;align-items:center;gap:22px;height:68px}
+.logo{font-weight:700;font-size:18px;display:flex;align-items:center;gap:10px;cursor:pointer}
+.logo i{width:32px;height:32px;border-radius:9px;background:var(--y);display:grid;place-items:center;color:var(--ink);font-style:normal;font-size:17px}
+.lk{background:none;border:0;color:#9aa1b3;cursor:pointer;padding:8px 2px;font-weight:600;transition:color .2s}
+.lk:hover,.lk.on{color:#fff}
+.lk.on{box-shadow:0 2px 0 var(--y)}
+.sp{flex:1}
+.mu{color:var(--mu);font-size:14px}
+nav .mu{color:#9aa1b3}
+.btn{background:var(--y);color:var(--ink);border:2px solid var(--ink);border-radius:12px;padding:11px 20px;font-weight:700;cursor:pointer;transition:transform .12s,box-shadow .12s}
+.btn:hover{transform:translateY(-2px);box-shadow:0 4px 0 var(--ink)}
+.btn.ghost{background:transparent;border-color:var(--line);color:inherit}
+.btn.ghost:hover{box-shadow:none;border-color:var(--ink)}
+nav .btn{border-color:var(--y)}
+nav .btn:hover{box-shadow:0 4px 0 #8a7300}
+nav .btn.ghost{border-color:#444b5c;color:#fff}
+.btn.dark{background:var(--ink);color:#fff}
+.btn.bad{background:#fff;color:var(--bad);border-color:var(--bad)}
+.btn.sm{padding:7px 13px;font-size:14px;border-radius:10px}
+.btn.full{width:100%;margin-top:14px}
+@media(max-width:820px){.nv{gap:12px}.lk{font-size:13px}.hid{display:none}}
+.hero{background:var(--ink);color:#fff;position:relative;overflow:hidden;padding:60px 0 118px}
+.hero::before{content:"";position:absolute;width:640px;height:640px;border-radius:50%;background:radial-gradient(circle,rgba(255,212,0,.16),transparent 65%);left:-200px;top:-240px}
+.wm{position:absolute;right:-90px;bottom:18px;width:880px;color:#191d28;pointer-events:none}
+.hg{display:grid;grid-template-columns:1.15fr .85fr;gap:48px;align-items:center;position:relative}
+@media(max-width:880px){.hg{grid-template-columns:1fr}.wm{width:620px}}
+.hero h1{font-size:clamp(32px,5.3vw,62px);line-height:1.05;font-weight:700;letter-spacing:-.025em}
+.hero h1 em{font-style:normal;color:var(--y)}
+.hero p{color:#aab0c0;font-size:18px;margin-top:20px;max-width:490px}
+.cta{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-top:26px}
+.cta span{border:1.5px solid #3a4152;border-radius:999px;padding:6px 14px;font-size:14px;font-weight:600;color:#d5d9e3}
+.tk{background:#fff;color:var(--ink);border-radius:24px;padding:26px;position:relative;box-shadow:9px 9px 0 var(--y)}
+.tk::before,.tk::after{content:"";position:absolute;top:86px;width:26px;height:26px;border-radius:50%;background:var(--ink)}
+.tk::before{left:-13px}.tk::after{right:-13px}
+.tk h3{font-size:18px}
+.tk .top{padding-bottom:28px;border-bottom:2px dashed var(--line)}
+label{display:block;font-weight:700;font-size:13px;margin:0 0 6px}
+.dts,.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.dts{margin-top:22px}
+.road{position:absolute;left:0;right:0;bottom:34px;border-top:4px dashed #353b4b}
+.road svg{position:absolute;top:-34px;width:84px;color:var(--y);animation:drive 6.5s cubic-bezier(.4,0,.2,1) forwards}
+@keyframes drive{from{left:-100px}to{left:calc(100% - 140px)}}
+@media(prefers-reduced-motion:reduce){.road svg{animation:none;left:8%}}
+.feat{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:18px;margin-top:-52px;position:relative;z-index:2}
+.ft{background:var(--paper);border-radius:18px;padding:20px 22px;border:1.5px solid var(--line);border-left:7px solid var(--y)}
+.ft b{display:block;font-size:16px}
+.ft span{color:var(--mu);font-size:14px}
+.sec{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 16px;margin:52px 0 16px}
+.sec h2{font-size:28px;letter-spacing:-.01em}
+input,select,textarea{background:var(--paper);border:1.5px solid var(--line);border-radius:12px;padding:12px 14px;width:100%}
+textarea{resize:vertical;min-height:84px}
+input[type=file]{padding:9px}
+.filters{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:24px}
+.filters input,.filters select{flex:1;min-width:160px;width:auto}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:24px;padding-bottom:70px}
+.car{background:var(--paper);border:1.5px solid var(--line);border-radius:22px;overflow:hidden;display:flex;flex-direction:column;cursor:pointer;transition:transform .15s,border-color .15s,box-shadow .15s}
+.car:hover{transform:translateY(-5px);border-color:var(--ink);box-shadow:0 14px 30px rgba(18,20,28,.12)}
+.pic{height:190px;position:relative;overflow:hidden;display:grid;place-items:center;color:hsl(var(--h) 68% 46%);background:linear-gradient(160deg,hsl(var(--h) 55% 94%),hsl(var(--h) 45% 84%))}
+.pic svg{width:74%;margin-top:-6px;filter:drop-shadow(0 12px 8px rgba(18,20,28,.2))}
+.pic img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:transform .4s}
+.car:hover .pic img{transform:scale(1.06)}
+.more{position:absolute;right:12px;top:12px;background:rgba(255,255,255,.92);border-radius:999px;padding:4px 12px;font-size:13px;font-weight:700;z-index:2}
+.plate{position:absolute;left:16px;bottom:-17px;background:var(--y);color:var(--ink);border:2.5px solid var(--ink);border-radius:999px;padding:5px 13px;font-weight:700;font-size:15px;z-index:2}
+.plate small{font-family:Manrope,sans-serif;font-weight:600;font-size:11px}
+.cb{padding:30px 20px 20px;display:flex;flex-direction:column;gap:11px;flex:1}
+.cb h3{font-size:18px}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{border:1.5px solid var(--line);border-radius:7px;padding:2px 10px;font-size:13px;color:var(--mu);font-weight:600}
+.chip.me{background:var(--ink);border-color:var(--ink);color:var(--y)}
+.cf{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:auto;padding-top:6px;flex-wrap:wrap}
+.badge{display:inline-block;border-radius:7px;padding:3px 10px;font-size:13px;font-weight:700;border:1.5px solid currentColor}
+.available,.confirmed,.completed{color:var(--ok)}
+.pending,.maintenance,.zabronirovano{color:var(--wait)}
+.cancelled{color:var(--bad)}
+.ttl{font-size:30px}
+.ph{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;margin:46px 0 26px}
+.back{background:none;border:0;cursor:pointer;font-weight:700;color:var(--mu);margin:28px 0 0;padding:4px 0}
+.back:hover{color:var(--ink)}
+.dtl{display:grid;grid-template-columns:1.2fr .8fr;gap:30px;align-items:start;margin:16px 0 40px}
+@media(max-width:920px){.dtl{grid-template-columns:1fr}}
+
+/* STILI DLYA 3D STSENY */
+.car-3d-stage {
+  width: 100%;
+  height: 380px;
+  background: radial-gradient(circle at center, #262b3a 0%, #12141c 100%);
+  border-radius: 24px;
+  border: 2.5px solid var(--ink);
+  position: relative;
+  overflow: hidden;
+  cursor: grab;
+  box-shadow: 0 16px 36px rgba(18,20,28,.2);
+}
+.car-3d-stage:active { cursor: grabbing; }
+.car-3d-hint {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  background: rgba(18,20,28,.75);
+  backdrop-filter: blur(8px);
+  color: var(--y);
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 700;
+  pointer-events: none;
+  border: 1px solid rgba(255,212,0,.3);
+  z-index: 5;
+}
+.img-preview {
+  margin-top: 16px;
+  border-radius: 20px;
+  overflow: hidden;
+  border: 1.5px solid var(--line);
+  max-height: 260px;
+}
+.img-preview img { width:100%; height:100%; object-fit:cover; display:block; }
+
+.panel{background:var(--paper);border:1.5px solid var(--line);border-radius:26px;padding:26px;position:sticky;top:90px}
+.panel h1{font-size:26px;line-height:1.15}
+.pl2{display:inline-block;background:var(--y);border:2.5px solid var(--ink);border-radius:10px;padding:6px 14px;font-weight:700;font-size:22px;margin:16px 0 4px}
+.specs{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:18px 0}
+.sc{border:1.5px solid var(--line);border-radius:12px;padding:9px 12px}
+.sc small{display:block;color:var(--mu);font-size:12px;font-weight:600}
+.sc b{font-size:15px}
+.own{display:flex;align-items:center;gap:10px;margin:6px 0 4px}
+.own i{width:38px;height:38px;border-radius:50%;background:var(--ink);color:var(--y);display:grid;place-items:center;font-style:normal;font-weight:700;font-family:Unbounded,sans-serif}
+.desc{margin:6px 0 0;color:#394150;white-space:pre-line}
+.box2{margin-top:26px;background:var(--paper);border:1.5px solid var(--line);border-radius:22px;padding:24px}
+.box2 h3{font-size:19px;margin-bottom:14px}
+.cals{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:26px}
+.mo h4{font-size:15px;text-transform:capitalize;margin-bottom:8px}
+.wd,.dg{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.wd span{text-align:center;font-size:12px;color:var(--mu);font-weight:700}
+.dg b{font-weight:600;text-align:center;padding:7px 0;border-radius:8px;font-size:14px;background:#e8f6ef;color:var(--ok)}
+.dg b.bz{background:#fde8e6;color:var(--bad);text-decoration:line-through}
+.dg b.pa{background:none;color:#b9bdc8}
+.dg i{display:block}
+.lg{display:flex;gap:16px;flex-wrap:wrap;margin-top:14px;font-size:13px;color:var(--mu)}
+.lg span::before{content:"";display:inline-block;width:12px;height:12px;border-radius:4px;margin-right:6px;vertical-align:-1px;background:#e8f6ef}
+.lg .r::before{background:#fde8e6}
+.cn{display:flex;gap:8px}
+.rv{border-top:1.5px solid var(--line);padding:14px 0}
+.rv b{font-size:14px}
+.rv .st{color:#e0a800;letter-spacing:2px}
+.bk{background:var(--paper);border:1.5px solid var(--line);border-left:8px solid var(--line);border-radius:16px;padding:16px 20px;display:flex;flex-wrap:wrap;align-items:center;gap:14px 28px;margin-bottom:12px}
+.bk.pending{border-left-color:var(--wait)}.bk.confirmed,.bk.completed{border-left-color:var(--ok)}.bk.cancelled{border-left-color:var(--bad)}
+.bk h3{font-size:16px}.bk .g{flex:1;min-width:190px}.bk b{font-size:18px}
+.empty{padding:46px 0;text-align:center;color:var(--mu);grid-column:1/-1}
+.empty .btn{margin:14px 4px 0}
+.ov{position:fixed;inset:0;background:rgba(18,20,28,.68);display:none;place-items:center;z-index:50;padding:16px}
+.ov.on{display:grid}
+.ov.on .box{animation:pop .18s ease-out}
+@keyframes pop{from{transform:scale(.95);opacity:0}to{transform:none;opacity:1}}
+.box{background:var(--paper);border-radius:24px;padding:28px;width:min(520px,100%);max-height:92vh;overflow:auto;border:3px solid var(--ink)}
+.box h2{font-size:21px;margin-bottom:4px}
+.box label{margin:14px 0 6px}
+.box input+input{margin-top:10px}
+.two label{margin-top:14px}
+.tabs{display:flex;gap:6px;margin-bottom:18px}
+.tabs button{flex:1;padding:10px;border:1.5px solid var(--line);background:#fff;border-radius:10px;font-weight:700;cursor:pointer}
+.tabs button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.tot{margin-top:16px;padding:14px;border:2px dashed var(--line);border-radius:12px;text-align:center}
+.tot b{display:block;font-size:26px;margin-top:2px}
+.okk{text-align:center;padding:6px 0}.okk div{font-size:54px}
+.msgs{height:340px;overflow:auto;display:flex;flex-direction:column;gap:8px;margin:14px 0;padding:12px;background:var(--bg);border-radius:12px;border:1.5px solid var(--line)}
+.b{max-width:80%;background:#fff;border:1.5px solid var(--line);border-radius:12px 12px 12px 3px;padding:8px 12px;overflow-wrap:anywhere}
+.b.me{align-self:flex-end;background:var(--y);border-color:var(--ink);border-radius:12px 12px 3px 12px}
+.b small{display:block;font-size:11px;opacity:.65;font-weight:600;margin-top:2px}
+.send{display:flex;gap:8px}
+.chat-item{display:flex;justify-content:space-between;align-items:center;background:var(--paper);border:1.5px solid var(--line);border-radius:14px;padding:14px 18px;margin-bottom:10px;cursor:pointer;transition:border-color .15s}
+.chat-item:hover{border-color:var(--ink)}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:12px 20px;border-radius:12px;z-index:99;display:none;max-width:90vw;white-space:pre-line;border-left:6px solid var(--y)}
+footer{background:var(--ink);color:#9aa1b3;padding:40px 0 28px;font-size:14px}
+.fg{display:flex;flex-wrap:wrap;gap:26px 70px;justify-content:space-between}
+footer b{color:#fff;display:block;margin-bottom:4px}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute"><symbol id="car" viewBox="0 0 200 80"><path d="M8 58V47q0-6 8-8l34-7 17-18q3-4 9-4h54q6 0 10 4l17 18 26 6q8 2 8 8v11z" fill="currentColor"/><path d="M72 32l11-14h28v14zM118 32V18h14l14 14z" fill="#fff" opacity=".85"/><circle cx="48" cy="60" r="13" fill="#12141c"/><circle cx="152" cy="60" r="13" fill="#12141c"/><circle cx="48" cy="60" r="5" fill="#cfd3dc"/><circle cx="152" cy="60" r="5" fill="#cfd3dc"/></symbol></svg>
+<nav><div class="wrap nv">
+  <div class="logo" onclick="showCars()"><i>R</i><span class="hid">RentCars</span></div>
+  <button class="lk" id="l1" onclick="showCars()">Машины</button>
+  <button class="lk" id="l2" onclick="showMine()">Мои машины</button>
+  <button class="lk" id="l3" onclick="showBookings()">Мои брони</button>
+  <button class="lk" id="l4" onclick="showChats()">Чаты</button>
+  <div class="sp"></div>
+  <div id="au" style="display:flex;gap:10px;align-items:center"></div>
+</div></nav>
+<div id="app"></div>
+<footer><div class="wrap"><div class="fg">
+  <div><b>RentCars</b>Аренда авто напрямую у владельцев.</div>
+  <div><b>Как это работает</b>Бронируешь, договариваешься в чате, забираешь ключи.</div>
+  <div><b>Сдаёшь машину?</b>Нажми «Добавить машину» и назови цену за сутки.</div>
+</div></div></footer>
+<div class="ov" id="ov" onclick="if(event.target===this)closeM()"><div class="box" id="bx"></div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+const $=s=>document.querySelector(s);
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmt=n=>Number(n).toLocaleString('ru-RU');
+const ST={pending:'Забронировано',confirmed:'Подтверждена',cancelled:'Отменена',completed:'Завершена',available:'Свободна',maintenance:'На обслуживании'};
+const GB={automatic:'Автомат',manual:'Механика'};
+const FL={petrol:'Бензин',diesel:'Дизель',electric:'Электро',gas:'Газ'};
+let token=localStorage.getItem('t'),cars=[],busy=[],cmo=0,chatSocket=null,tm=null,timer=null,pend=null;
+let current3DAnim = null;
+
+const today=()=>new Date().toISOString().slice(0,10);
+const hue=s=>{let h=0;for(const ch of String(s))h=(h*31+ch.charCodeAt(0))%360;return h};
+
+function toast(t){const e=$('#toast');e.textContent=t;e.style.display='block';clearTimeout(tm);tm=setTimeout(()=>e.style.display='none',3800)}
+function err(e){if(!e)return'Ошибка';if(typeof e==='string')return e;if(e.detail)return e.detail;
+  return Object.entries(e).map(([k,v])=>(k==='non_field_errors'?'':k+': ')+[].concat(v).join(' ')).join('\n')}
+function uid(){try{return JSON.parse(atob(token.split('.')[1])).user_id}catch(e){return null}}
+
+async function refresh(){
+  const r=localStorage.getItem('r');if(!r)return false;
+  const x=await fetch('/token/refresh/',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({refresh:r})});
+  if(!x.ok)return false;
+  token=(await x.json()).access;localStorage.setItem('t',token);return true;
+}
+async function api(path,opt,retry){
+  opt=opt||{};
+  const isF=opt.body instanceof FormData,h={};
+  if(!isF)h['Content-Type']='application/json';
+  if(token)h.Authorization='Bearer '+token;
+  const r=await fetch(path,{method:opt.method||'GET',headers:h,body:opt.body?(isF?opt.body:JSON.stringify(opt.body)):undefined});
+  let d=null;try{d=await r.json()}catch(e){}
+  if(r.status===401&&token&&!retry){
+    if(await refresh())return api(path,opt,true);
+    logout(true);throw{detail:'Сессия закончилась. Войди снова.'};
+  }
+  if(!r.ok)throw d||{detail:'Ошибка сервера'};
+  return d;
+}
+
+function renderNav(){
+  $('#au').innerHTML=token
+    ?'<button class="btn sm" onclick="carM()">+ Добавить машину</button><span class="mu hid">'+esc(localStorage.getItem('u')||'')+'</span><button class="btn ghost sm" onclick="logout()">Выйти</button>'
+    :'<button class="btn sm" onclick="authM(\'in\')">Войти</button>';
+}
+function setTab(n){[1,2,3,4].forEach(i=>$('#l'+i)?.classList.toggle('on',i===n))}
+function logout(silent){
+  token=null;['t','r','u'].forEach(k=>localStorage.removeItem(k));
+  if(chatSocket)chatSocket.close();
+  renderNav();showCars();if(!silent)toast('Ты вышел из аккаунта');
+}
+function openM(){$('#ov').classList.add('on')}
+function closeM(){
+  $('#ov').classList.remove('on');
+  if(chatSocket){chatSocket.close();chatSocket=null;}
+}
+
+function deb(){clearTimeout(timer);timer=setTimeout(loadCars,300)}
+function showCars(){
+  setTab(1);window.scrollTo(0,0);
+  if(current3DAnim) cancelAnimationFrame(current3DAnim);
+  if(chatSocket){chatSocket.close();chatSocket=null;}
+  const t=today();
+  $('#app').innerHTML='<section class="hero"><svg class="wm" viewBox="0 0 200 80"><use href="#car"/></svg>'
+  +'<div class="wrap hg"><div><h1>Машина на любой день. <em>Ключи у владельца.</em></h1><p>Выбери даты, найди свободный автомобиль и договорись с владельцем в чате. Цена видна сразу, посредников нет.</p>'
+  +'<div class="cta"><button class="btn" onclick="carM()">Сдать свою машину</button><span>Без посредников</span><span>Чат с владельцем</span></div></div>'
+  +'<div class="tk"><div class="top"><h3>Когда нужна машина?</h3><span class="mu">Покажем только свободные на эти даты</span></div>'
+  +'<div class="dts"><div><label>С какого дня</label><input id="hs" type="date" min="'+t+'"></div><div><label>По какой день</label><input id="he" type="date" min="'+t+'"></div></div>'
+  +'<button class="btn full" onclick="findFree()">Найти свободные машины</button></div></div>'
+  +'<div class="road"><svg viewBox="0 0 200 80"><use href="#car"/></svg></div></section>'
+  +'<div class="wrap"><div class="feat"><div class="ft"><b>Бронь за минуту</b><span>Даты, цена и подтверждение в одном окне.</span></div>'
+  +'<div class="ft"><b>3D-просмотр авто</b><span>Интерактивная 3D-модель машины на 360 градусов.</span></div>'
+  +'<div class="ft"><b>Сдавай свою машину</b><span>Добавь авто, назови цену и принимай брони.</span></div></div>'
+  +'<div class="sec" id="cat"><h2>Машины</h2><span class="mu" id="info"></span></div>'
+  +'<div class="filters"><input id="q" placeholder="Марка или модель" oninput="deb()"><input id="mp" type="number" min="0" placeholder="Цена за сутки до" oninput="deb()">'
+  +'<select id="o" onchange="loadCars()"><option value="">Без сортировки</option><option value="price_per_day">Сначала дешевле</option><option value="-price_per_day">Сначала дороже</option><option value="-year">Сначала новее</option></select>'
+  +'<button class="btn ghost" onclick="resetF()">Сбросить</button></div>'
+  +'<div class="grid" id="grid"><div class="empty">Загружаем машины…</div></div></div>';
+  loadCars();
+}
+function findFree(){
+  const a=$('#hs').value,b=$('#he').value;
+  if(!a||!b)return toast('Выбери обе даты');
+  if(b<=a)return toast('Дата окончания должна быть позже начала');
+  loadCars();$('#cat').scrollIntoView({behavior:'smooth'});
+}
+function resetF(){['q','mp','o','hs','he'].forEach(i=>$('#'+i).value='');loadCars()}
+async function loadCars(){
+  const p=new URLSearchParams(),a=$('#hs').value,b=$('#he').value;
+  if($('#q').value)p.set('search',$('#q').value);
+  if($('#mp').value)p.set('max_price',$('#mp').value);
+  if($('#o').value)p.set('ordering',$('#o').value);
+  const dated=a&&b&&b>a;
+  if(dated){p.set('start',a);p.set('end',b)}
+  try{
+    const d=await api('/cars/?'+p);cars=d.results||d;
+    $('#info').textContent=dated?'Свободно с '+a+' по '+b+': '+cars.length:'Всего: '+cars.length;
+    $('#grid').innerHTML=cars.length?cars.map(carCard).join(''):'<div class="empty">Машин не найдено. Измени даты, поиск или цену, либо добавь свою.<br><button class="btn" onclick="carM()">+ Добавить машину</button><button class="btn ghost" onclick="resetF()">Сбросить фильтры</button></div>';
+  }catch(e){toast(err(e))}
+}
+function carCard(c){
+  const mine=token&&String(c.owner)===String(uid());
+  const chips=[c.transmission&&(GB[c.transmission]||c.transmission),c.seats&&c.seats+' мест',c.rating&&'★ '+c.rating]
+    .filter(Boolean).map(x=>'<span class="chip">'+esc(x)+'</span>').join('');
+  const act=mine?'<div style="display:flex;gap:6px"><button class="btn ghost sm" onclick="carM('+c.id+')">Изменить</button><button class="btn bad sm" onclick="delCar('+c.id+')">Удалить</button></div>'
+    :(c.status==='available'?'<button class="btn sm" onclick="showCar('+c.id+')">Забронировать</button>':'');
+  return '<article class="car" onclick="showCar('+c.id+')"><div class="pic" style="--h:'+hue(c.brand+c.model)+'"><span class="more">3D-вид</span>'
+    +(c.image?'<img src="'+esc(c.image)+'" alt="">':'<svg viewBox="0 0 200 80"><use href="#car"/></svg>')
+    +'<div class="plate">'+fmt(c.price_per_day)+' <small>в сутки</small></div></div>'
+    +'<div class="cb"><h3>'+esc(c.brand)+' '+esc(c.model)+'</h3>'
+    +'<div class="chips"><span class="chip">'+esc(c.year)+' г.</span>'+chips+(mine?'<span class="chip me">Ваша машина</span>':'')+'</div>'
+    +'<div class="cf" onclick="event.stopPropagation()"><span class="badge '+esc(c.status)+'">'+(ST[c.status]||esc(c.status))+'</span>'+act+'</div></div></article>';
+}
+
+function calHTML(){
+  const base=new Date();base.setDate(1);base.setMonth(base.getMonth()+cmo);
+  const wd=['Пн','Вт','Ср','Чт','Пт','Сб','Вс'].map(x=>'<span>'+x+'</span>').join('');
+  let out='';
+  for(let k=0;k<2;k++){
+    const d=new Date(base.getFullYear(),base.getMonth()+k,1),y=d.getFullYear(),m=d.getMonth();
+    const days=new Date(y,m+1,0).getDate(),lead=(d.getDay()+6)%7;
+    let cells='<i></i>'.repeat(lead);
+    for(let i=1;i<=days;i++){
+      const iso=y+'-'+String(m+1).padStart(2,'0')+'-'+String(i).padStart(2,'0');
+      const bz=busy.some(r=>iso>=r.start_date&&iso<r.end_date);
+      cells+='<b class="'+(bz?'bz':iso<today()?'pa':'')+'">'+i+'</b>';
+    }
+    out+='<div class="mo"><h4>'+d.toLocaleString('ru-RU',{month:'long',year:'numeric'})+'</h4><div class="wd">'+wd+'</div><div class="dg">'+cells+'</div></div>';
+  }
+  return out;
+}
+function moveCal(n){cmo=Math.max(0,cmo+n);$('#cal').innerHTML=calHTML()}
+
+async function showCar(id){
+  setTab(1);window.scrollTo(0,0);
+  if(chatSocket){chatSocket.close();chatSocket=null;}
+  $('#app').innerHTML='<div class="wrap"><div class="empty">Загружаем страницу машины…</div></div>';
+  try{
+    const c=await api('/cars/'+id+'/');
+    const [b,r]=await Promise.all([api('/cars/'+id+'/busy-dates/').catch(()=>[]),api('/reviews/?car='+id).catch(()=>null)]);
+    busy=b.results||b;cmo=0;
+    if(!cars.find(x=>x.id===c.id))cars.push(c);
+    const rv=r?(r.results||r):null;
+    const mine=token&&String(c.owner)===String(uid()),t=today();
+    const specs=[['Год',c.year+' г.'],c.transmission&&['Коробка',GB[c.transmission]||c.transmission],c.fuel&&['Топливо',FL[c.fuel]||c.fuel],c.seats&&['Мест',c.seats]]
+      .filter(Boolean).map(x=>'<div class="sc"><small>'+x[0]+'</small><b>'+esc(x[1])+'</b></div>').join('');
+    const book=mine
+      ?'<div class="cn"><button class="btn ghost" style="flex:1" onclick="carM('+c.id+')">Изменить</button><button class="btn bad" style="flex:1" onclick="delCar('+c.id+')">Удалить</button></div><p class="mu" style="margin-top:10px">Это твоя машина. Брони смотри во вкладке «Мои брони» или «Чаты».</p>'
+      :c.status==='available'
+      ?'<div class="two"><div><label>С какого дня</label><input id="d1" type="date" min="'+t+'" onchange="calc('+c.id+')"></div><div><label>По какой день</label><input id="d2" type="date" min="'+t+'" onchange="calc('+c.id+')"></div></div>'
+        +'<div class="tot" id="tot">Выбери даты аренды</div><button class="btn full" onclick="bookD('+c.id+')">Забронировать</button>'
+      :'<div class="tot">Сейчас машина забронирована или недоступна</div>';
+      
+    $('#app').innerHTML='<div class="wrap"><button class="back" onclick="showCars()">← Все машины</button><div class="dtl"><div>'
+      +'<div class="car-3d-stage" id="stage3d"><div class="car-3d-hint">🔄 Крути 3D-модель мышкой</div></div>'
+      +(c.image?'<div class="img-preview"><img src="'+esc(c.image)+'" alt="Фото авто"></div>':'')
+      +(c.description?'<div class="box2"><h3>Об этой машине</h3><p class="desc">'+esc(c.description)+'</p></div>':'')
+      +'<div class="box2"><h3>Когда машина свободна</h3><div class="cn" style="margin-bottom:12px"><button class="btn ghost sm" onclick="moveCal(-1)">← Раньше</button><button class="btn ghost sm" onclick="moveCal(1)">Позже →</button></div>'
+      +'<div class="cals" id="cal">'+calHTML()+'</div><div class="lg"><span>Свободно</span><span class="r">Занято</span></div></div>'
+      +(rv?'<div class="box2"><h3>Отзывы ('+rv.length+')</h3>'+(rv.length?rv.map(x=>'<div class="rv"><span class="st">'+'★'.repeat(x.rating)+'</span> <b>'+esc(x.user_username)+'</b><p>'+esc(x.text)+'</p></div>').join(''):'<p class="mu">Отзывов пока нет.</p>')+'</div>':'')
+      +'</div><aside class="panel"><span class="badge '+esc(c.status)+'">'+(ST[c.status]||esc(c.status))+'</span>'
+      +'<h1 style="margin-top:12px">'+esc(c.brand)+' '+esc(c.model)+'</h1>'
+      +'<div class="mu" style="margin-top:4px">'+(c.rating?'★ '+c.rating+' средняя оценка':'Пока без оценок')+'</div>'
+      +'<div class="pl2">'+fmt(c.price_per_day)+' <small style="font-size:12px;font-family:Manrope,sans-serif">в сутки</small></div>'
+      +'<div class="specs">'+specs+'</div>'
+      +(c.owner_username?'<div class="own"><i>'+esc(c.owner_username[0].toUpperCase())+'</i><div><b>'+esc(c.owner_username)+'</b><div class="mu">Владелец</div></div></div>':'')
+      +'<div style="margin-top:14px">'+book+'</div></aside></div></div>';
+      
+    // Zapusk 3D-stseny mashiny posle doplotneniya DOM
+    setTimeout(() => initReal3DCar('stage3d', c), 50);
+
+  }catch(e){toast(err(e));showCars()}
+}
+
+// OTDLENNAYA 100% RABOCHAYA 3D-STSENA NA THREE.JS
+function initReal3DCar(containerId, carData) {
+  const container = document.getElementById(containerId);
+  if(!container) return;
+  
+  if(current3DAnim) cancelAnimationFrame(current3DAnim);
+
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 1000);
+  camera.position.set(5, 2.5, 6);
+  camera.lookAt(0, 0.5, 0);
+
+  const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+  renderer.setSize(container.clientWidth, container.clientHeight);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.shadowMap.enabled = true;
+  container.innerHTML = '<div class="car-3d-hint">🔄 Крути 3D-модель мышкой</div>';
+  container.appendChild(renderer.domElement);
+
+  // Svet
+  const ambient = new THREE.AmbientLight(0xffffff, 0.8);
+  scene.add(ambient);
+
+  const sun = new THREE.DirectionalLight(0xffd400, 1.2);
+  sun.position.set(5, 10, 7);
+  sun.castShadow = true;
+  scene.add(sun);
+
+  const backLight = new THREE.DirectionalLight(0x4477ff, 0.6);
+  backLight.position.set(-5, 5, -5);
+  scene.add(backLight);
+
+  // Gruppa Mashiny
+  const carGroup = new THREE.Group();
+
+  // Tsvet mashiny generiruyetsya po nazvaniyu
+  const carColor = hue(carData.brand + carData.model);
+  const bodyMaterial = new THREE.MeshStandardMaterial({ 
+    color: new THREE.Color(`hsl(${carColor}, 70%, 45%)`), 
+    roughness: 0.2, 
+    metalness: 0.7 
+  });
+  const glassMaterial = new THREE.MeshStandardMaterial({ color: 0x111522, roughness: 0.1, metalness: 0.9, transparent: true, opacity: 0.85 });
+  const wheelMaterial = new THREE.MeshStandardMaterial({ color: 0x151515, roughness: 0.8 });
+  const chromeMaterial = new THREE.MeshStandardMaterial({ color: 0xdddddd, metalness: 0.95, roughness: 0.1 });
+
+  // 1. Nizhnyaya chast kuzova
+  const mainBodyGeom = new THREE.BoxGeometry(3.6, 0.7, 1.7);
+  const mainBody = new THREE.Mesh(mainBodyGeom, bodyMaterial);
+  mainBody.position.y = 0.55;
+  mainBody.castShadow = true;
+  carGroup.add(mainBody);
+
+  // 2. Kabina (Stekla i krysha)
+  const cabinGeom = new THREE.BoxGeometry(1.9, 0.65, 1.45);
+  const cabin = new THREE.Mesh(cabinGeom, glassMaterial);
+  cabin.position.set(-0.2, 1.15, 0);
+  cabin.castShadow = true;
+  carGroup.add(cabin);
+
+  // Krysha
+  const roofGeom = new THREE.BoxGeometry(1.7, 0.08, 1.43);
+  const roof = new THREE.Mesh(roofGeom, bodyMaterial);
+  roof.position.set(-0.2, 1.5, 0);
+  carGroup.add(roof);
+
+  // 3. Kolesa s diskami
+  const wheelGeom = new THREE.CylinderGeometry(0.38, 0.38, 0.28, 32);
+  wheelGeom.rotateX(Math.PI / 2);
+  const rimGeom = new THREE.CylinderGeometry(0.2, 0.2, 0.29, 16);
+  rimGeom.rotateX(Math.PI / 2);
+
+  const wheelPositions = [
+    [1.1, 0.38, 0.88],
+    [1.1, 0.38, -0.88],
+    [-1.1, 0.38, 0.88],
+    [-1.1, 0.38, -0.88]
+  ];
+
+  wheelPositions.forEach(pos => {
+    const w = new THREE.Mesh(wheelGeom, wheelMaterial);
+    w.position.set(...pos);
+    w.castShadow = true;
+    const r = new THREE.Mesh(rimGeom, chromeMaterial);
+    w.add(r);
+    carGroup.add(w);
+  });
+
+  // 4. Phary
+  const headlightGeom = new THREE.BoxGeometry(0.08, 0.18, 0.4);
+  const headlightMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+  const hlLeft = new THREE.Mesh(headlightGeom, headlightMat);
+  hlLeft.position.set(1.81, 0.6, 0.55);
+  const hlRight = new THREE.Mesh(headlightGeom, headlightMat);
+  hlRight.position.set(1.81, 0.6, -0.55);
+  carGroup.add(hlLeft);
+  carGroup.add(hlRight);
+
+  // Zemlya pod mashinoy (Ten)
+  const shadowGeom = new THREE.PlaneGeometry(5, 3);
+  const shadowMat = new THREE.MeshBasicMaterial({ color: 0x0a0c12, transparent: true, opacity: 0.55 });
+  const shadowPlane = new THREE.Mesh(shadowGeom, shadowMat);
+  shadowPlane.rotation.x = -Math.PI / 2;
+  shadowPlane.position.y = 0.01;
+  scene.add(shadowPlane);
+
+  scene.add(carGroup);
+
+  // Upravlenie myshkoy
+  let isDragging = false;
+  let prevMouse = { x: 0, y: 0 };
+
+  container.onmousedown = (e) => { isDragging = true; prevMouse = { x: e.clientX, y: e.clientY }; };
+  window.onmousemove = (e) => {
+    if (!isDragging) return;
+    const dx = e.clientX - prevMouse.x;
+    const dy = e.clientY - prevMouse.y;
+    carGroup.rotation.y += dx * 0.008;
+    carGroup.rotation.x = Math.max(-0.4, Math.min(0.4, carGroup.rotation.x + dy * 0.005));
+    prevMouse = { x: e.clientX, y: e.clientY };
+  };
+  window.onmouseup = () => { isDragging = false; };
+
+  // Sensornoe upravlenie (dlya smartfonov)
+  container.ontouchstart = (e) => { isDragging = true; prevMouse = { x: e.touches[0].clientX, y: e.touches[0].clientY }; };
+  window.ontouchmove = (e) => {
+    if (!isDragging) return;
+    const dx = e.touches[0].clientX - prevMouse.x;
+    carGroup.rotation.y += dx * 0.008;
+    prevMouse = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+  };
+  window.ontouchend = () => { isDragging = false; };
+
+  // Avto-vrashchenie
+  function animate() {
+    current3DAnim = requestAnimationFrame(animate);
+    if (!isDragging) {
+      carGroup.rotation.y += 0.004;
+    }
+    renderer.render(scene, camera);
+  }
+  animate();
+}
+
+function bookD(id){
+  if(!token){pend=id;toast('Войди, чтобы забронировать');return authM('in')}
+  book(id);
+}
+
+async function showMine(){
+  if(!token){toast('Войди, чтобы управлять машинами');return authM('in')}
+  setTab(2);window.scrollTo(0,0);
+  if(current3DAnim) cancelAnimationFrame(current3DAnim);
+  if(chatSocket){chatSocket.close();chatSocket=null;}
+  $('#app').innerHTML='<div class="wrap" style="min-height:64vh"><div class="ph"><div><h2 class="ttl">Мои машины</h2><span class="mu">Добавляй, меняй и удаляй свои автомобили</span></div>'
+  +'<button class="btn" onclick="carM()">+ Добавить машину</button></div><div class="grid" id="mg"></div></div>';
+  try{
+    const d=await api('/cars/');cars=d.results||d;
+    const me=String(uid()),mine=cars.filter(c=>String(c.owner)===me);
+    $('#mg').innerHTML=mine.length?mine.map(carCard).join(''):'<div class="empty">У тебя пока нет машин.<br>Добавь первую, и её смогут забронировать.<br><button class="btn" onclick="carM()">+ Добавить машину</button></div>';
+  }catch(e){toast(err(e))}
+}
+function carM(id){
+  if(!token){toast('Войди, чтобы добавить машину');return authM('in')}
+  const c=id?cars.find(x=>x.id===id):{};
+  $('#bx').innerHTML='<h2>'+(id?'Изменить машину':'Новая машина')+'</h2><p class="mu">'+(id?'Поменяй нужные поля':'Заполни данные, и машина появится в каталоге')+'</p>'
+  +'<div class="two"><div><label>Марка</label><input id="f1" placeholder="Toyota" value="'+esc(c.brand||'')+'"></div><div><label>Модель</label><input id="f2" placeholder="Camry" value="'+esc(c.model||'')+'"></div></div>'
+  +'<div class="two"><div><label>Год выпуска</label><input id="f3" type="number" min="1950" max="2100" placeholder="2020" value="'+esc(c.year||'')+'"></div>'
+  +'<div><label>Цена за сутки</label><input id="f4" type="number" min="0" placeholder="50000" value="'+(c.price_per_day?Math.round(c.price_per_day):'')+'"></div></div>'
+  +'<label style="margin-top:14px">Статус</label><select id="f5"><option value="available">Свободна</option><option value="maintenance">На обслуживании</option></select>'
+  +'<label style="margin-top:14px">Описание</label><textarea id="f7" placeholder="Состояние, пробег, условия аренды">'+esc(c.description||'')+'</textarea>'
+  +'<label style="margin-top:14px">Фото</label><input id="f6" type="file" accept="image/*">'
+  +'<button class="btn full" onclick="saveCar('+(id||0)+')">'+(id?'Сохранить изменения':'Добавить машину')+'</button>';
+  if(c.status)$('#f5').value=c.status;
+  openM();
+}
+async function saveCar(id){
+  const f=new FormData(),im=$('#f6').files[0];
+  f.append('brand',$('#f1').value.trim());f.append('model',$('#f2').value.trim());
+  f.append('year',$('#f3').value);f.append('price_per_day',$('#f4').value);f.append('status',$('#f5').value);
+  f.append('description',$('#f7').value);
+  if(im)f.append('image',im);
+  try{
+    await api(id?'/cars/'+id+'/':'/cars/',{method:id?'PATCH':'POST',body:f});
+    closeM();toast(id?'Изменения сохранены':'Машина добавлена');showMine();
+  }catch(e){toast(err(e))}
+}
+async function delCar(id){
+  if(!confirm('Удалить эту машину?'))return;
+  try{await api('/cars/'+id+'/',{method:'DELETE'});toast('Машина удалена');showMine()}catch(e){toast(err(e))}
+}
+
+function authM(m){
+  m=m||'in';
+  $('#bx').innerHTML='<div class="tabs"><button class="'+(m==='in'?'on':'')+'" onclick="authM(\'in\')">Вход</button><button class="'+(m==='up'?'on':'')+'" onclick="authM(\'up\')">Регистрация</button></div>'
+  +'<input id="u" placeholder="Логин" autocomplete="username">'
+  +(m==='up'?'<input id="e" type="email" placeholder="Email">':'')
+  +'<input id="p" type="password" placeholder="Пароль, от 6 символов" onkeydown="if(event.key===\'Enter\')auth(\''+m+'\')">'
+  +'<button class="btn full" onclick="auth(\''+m+'\')">'+(m==='in'?'Войти':'Создать аккаунт')+'</button>';
+  openM();
+}
+async function auth(m){
+  const u=$('#u').value.trim(),p=$('#p').value;
+  try{
+    if(m==='up')await api('/register/',{method:'POST',body:{username:u,email:$('#e').value.trim(),password:p}});
+    const d=await api('/login/',{method:'POST',body:{username:u,password:p}});
+    token=d.access;localStorage.setItem('t',d.access);localStorage.setItem('r',d.refresh);localStorage.setItem('u',u);
+    closeM();renderNav();toast(m==='up'?'Аккаунт создан. Добро пожаловать!':'Ты вошёл как '+u);
+    if(pend){const id=pend;pend=null;showCar(id)}else showCars();
+  }catch(e){toast(err(e))}
+}
+
+function calc(id){
+  const c=cars.find(x=>x.id===id),a=$('#d1').value,b=$('#d2').value;
+  if(!a||!b)return;
+  const n=Math.round((new Date(b)-new Date(a))/864e5);
+  if(n<=0)return $('#tot').innerHTML='Дата окончания должна быть позже начала';
+  if(busy.some(r=>a<r.end_date&&b>r.start_date))return $('#tot').innerHTML='Эти даты уже заняты';
+  $('#tot').innerHTML=n+' сут. × '+fmt(c.price_per_day)+'<b>'+fmt(n*c.price_per_day)+'</b>';
+}
+async function book(id){
+  try{
+    const d=await api('/dogovors/',{method:'POST',body:{car:id,start_date:$('#d1').value,end_date:$('#d2').value}});
+    $('#bx').innerHTML='<div class="okk"><div>🎉</div><h2>Машина забронирована</h2><p class="mu">Итого: '+fmt(d.total_price)+'. Владелец получил уведомление.</p></div>'
+    +'<button class="btn full" onclick="chatM('+d.id+')">Открыть чат с владельцем</button>'
+    +'<button class="btn ghost full" onclick="closeM();showBookings()">Мои брони</button>';
+    openM();
+  }catch(e){toast(err(e))}
+}
+
+async function showBookings(){
+  if(!token)return authM('in');
+  setTab(3);window.scrollTo(0,0);
+  if(current3DAnim) cancelAnimationFrame(current3DAnim);
+  if(chatSocket){chatSocket.close();chatSocket=null;}
+  $('#app').innerHTML='<div class="wrap" style="min-height:64vh"><div class="ph"><div><h2 class="ttl">Мои брони</h2><span class="mu">Твои поездки и брони на твои машины</span></div></div><div id="bl"></div></div>';
+  try{
+    const d=await api('/dogovors/'),l=(d.results||d).sort((a,b)=>b.id-a.id),me=String(uid());
+    $('#bl').innerHTML=l.length?l.map(b=>{
+      const mine=String(b.user)===me;
+      return '<div class="bk '+esc(b.status)+'"><div class="g"><h3>'+esc(b.car_title)+'</h3><div class="mu">'+esc(b.start_date)+' — '+esc(b.end_date)
+      +(mine?'':'<br><b>Клиент: '+esc(b.user_username)+'</b>')+'</div></div>'
+      +'<b>'+fmt(b.total_price)+'</b><span class="badge '+esc(b.status)+'">'+(ST[b.status]||esc(b.status))+'</span>'
+      +'<div style="display:flex;gap:8px"><button class="btn dark sm" onclick="chatM('+b.id+')">Чат</button>'+(mine&&b.status==='pending'?'<button class="btn bad sm" onclick="cancelBook('+b.id+')">Отменить</button>':'')+'</div></div>';
+    }).join(''):'<div class="empty">У тебя пока нет броней.<br><button class="btn" onclick="showCars()">Найти машину</button></div>';
+  }catch(e){toast(err(e))}
+}
+
+async function showChats(){
+  if(!token)return authM('in');
+  setTab(4);window.scrollTo(0,0);
+  if(current3DAnim) cancelAnimationFrame(current3DAnim);
+  if(chatSocket){chatSocket.close();chatSocket=null;}
+  $('#app').innerHTML='<div class="wrap" style="min-height:64vh"><div class="ph"><div><h2 class="ttl">Все чаты</h2><span class="mu">Переписки по броням</span></div></div><div id="clist"><div class="empty">Загружаем чаты…</div></div></div>';
+  try{
+    const d=await api('/dogovors/'),l=(d.results||d).sort((a,b)=>b.id-a.id),me=String(uid());
+    $('#clist').innerHTML=l.length?l.map(b=>{
+      const isMyCar=String(b.user)!==me;
+      return '<div class="chat-item" onclick="chatM('+b.id+')"><div><b>'+esc(b.car_title)+'</b><div class="mu">Период: '+esc(b.start_date)+' — '+esc(b.end_date)+' | <b>'+(isMyCar?'Клиент: '+esc(b.user_username):'Владелец брони')+'</b></div></div><button class="btn sm">Открыть чат</button></div>';
+    }).join(''):'<div class="empty">У тебя пока нет активных чатов.</div>';
+  }catch(e){toast(err(e))}
+}
+
+async function cancelBook(id){
+  if(!confirm('Отменить эту бронь?'))return;
+  try{await api('/dogovors/'+id+'/',{method:'PATCH',body:{status:'cancelled'}});toast('Бронь отменена');showBookings()}catch(e){toast(err(e))}
+}
+
+async function chatM(id){
+  if(!token)return authM('in');
+  if(chatSocket){chatSocket.close();chatSocket=null;}
+  try{
+    const b=await api('/dogovors/'+id+'/');
+    $('#bx').innerHTML='<h2>Чат по брони</h2><p class="mu">'+esc(b.car_title)+' ('+esc(b.start_date)+' — '+esc(b.end_date)+')</p>'
+    +'<div class="msgs" id="msgs"><div style="text-align:center;color:var(--mu)">Подключение к WebSocket…</div></div>'
+    +'<div class="send"><input id="mt" placeholder="Напиши сообщение..." onkeydown="if(event.key===\'Enter\')sendMsg('+id+')"><button class="btn sm" onclick="sendMsg('+id+')">Отправить</button></div>';
+    openM();
+    
+    await loadMsgs(id);
+
+    const wsScheme = window.location.protocol === "https:" ? "wss://" : "ws://";
+    chatSocket = new WebSocket(wsScheme + window.location.host + '/ws/chat/' + id + '/');
+
+    chatSocket.onmessage = function(e) {
+      const data = JSON.parse(e.data);
+      const box = $('#msgs');
+      if(!box)return;
+      const isMe = data.sender_username === localStorage.getItem('u');
+      box.innerHTML += '<div class="b'+(isMe?' me':'')+'"><b>'+esc(data.sender_username)+'</b><span>'+esc(data.text)+'</span><small>Только что</small></div>';
+      box.scrollTop = box.scrollHeight;
+    };
+
+    chatSocket.onclose = function(e) {
+      console.log('Chat socket closed');
+    };
+
+  }catch(e){toast(err(e))}
+}
+
+async function loadMsgs(id){
+  try{
+    const d=await api('/messages/?dogovor='+id);
+    const msgs=d.results||d;
+    const box=$('#msgs');
+    if(!box)return;
+    box.innerHTML=msgs.length?msgs.map(m=>{
+      const isMe=String(m.sender)===String(uid());
+      let t='';try{t=new Date(m.created_at).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});}catch(e){}
+      return '<div class="b'+(isMe?' me':'')+'"><b>'+esc(m.sender_username)+'</b><span>'+esc(m.text)+'</span>'+(t?'<small>'+t+'</small>':'')+'</div>';
+    }).join(''):'<div style="text-align:center;color:var(--mu);margin-top:20px">Сообщений пока нет. Напиши первое!</div>';
+    box.scrollTop=box.scrollHeight;
+  }catch(e){toast(err(e))}
+}
+
+async function sendMsg(id){
+  const inp=$('#mt'),txt=inp.value.trim();
+  if(!txt)return;
+  try{
+    await api('/messages/',{method:'POST',body:{dogovor:id,text:txt}});
+    
+    if(chatSocket && chatSocket.readyState === WebSocket.OPEN){
+      chatSocket.send(JSON.stringify({
+        'text': txt,
+        'username': localStorage.getItem('u')
+      }));
+    }
+    inp.value='';
+  }catch(e){toast(err(e))}
+}
+
+renderNav();showCars();
+</script>
+</body>
+</html>
