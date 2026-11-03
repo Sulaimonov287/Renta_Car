@@ -1,0 +1,14 @@
+# Python / Virtualenv
+venv/
+__pycache__/
+*.pyc
+
+# Database
+db.sqlite3
+
+# Environment variables
+.env
+
+# Media and Static (esli nuzhno sobirat na servere)
+media/
+staticfiles/

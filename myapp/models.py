@@ -12,6 +12,7 @@ class Car(models.Model):
     price_per_day = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Tsena za sutki")
     status = models.CharField(max_length=20, default='available', verbose_name="Status")
     image = models.ImageField(upload_to='cars/', blank=True, null=True, verbose_name="Foto")
+    model_3d = models.FileField(upload_to='models3d/', blank=True, null=True, verbose_name="3D-модель (.glb)")
 
     def __str__(self):
         return f"{self.brand} -- {self.model}"
